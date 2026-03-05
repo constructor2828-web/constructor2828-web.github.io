@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LolOS - Low-level Operating System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #22d3ee;
+            --dark: #0f172a;
+            --dark-light: #1e293b;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--dark);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: 
+                radial-gradient(ellipse at 20% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(34, 211, 238, 0.1) 0%, transparent 50%),
+                var(--dark);
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            font-size: 4rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .tagline {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            font-weight: 300;
+        }
+
+        .hero {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: center;
+            margin-bottom: 60px;
+        }
+
+        .hero-content {
+            animation: fadeInLeft 0.8s ease-out 0.2s both;
+        }
+
+        @keyframes fadeInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+
+        .hero p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            line-height: 1.7;
+            margin-bottom: 30px;
+        }
+
+        .stats {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .stat {
+            background: var(--dark-light);
+            padding: 15px 25px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--secondary);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 16px 32px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px rgba(99, 102, 241, 0.5);
+        }
+
+        .download-btn svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .hero-visual {
+            animation: fadeInRight 0.8s ease-out 0.4s both;
+        }
+
+        @keyframes fadeInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .preview-card {
+            background: var(--dark-light);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255,255,255,0.05);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+        }
+
+        .preview-header {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .preview-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .dot-red { background: #ef4444; }
+        .dot-yellow { background: #f59e0b; }
+        .dot-green { background: #22c55e; }
+
+        .terminal {
+            background: #0a0a0a;
+            border-radius: 12px;
+            padding: 20px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.85rem;
+        }
+
+        .terminal-line {
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .terminal-prompt {
+            color: var(--secondary);
+        }
+
+        .terminal-output {
+            color: var(--text);
+        }
+
+        .features {
+            margin-bottom: 60px;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .feature-card {
+            background: var(--dark-light);
+            padding: 30px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+        }
+
+        .feature-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 10px;
+        }
+
+        .feature-card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .apps {
+            margin-bottom: 60px;
+        }
+
+        .apps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .app-item {
+            background: var(--dark-light);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .app-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .app-name {
+            font-weight: 600;
+        }
+
+        .credentials {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(34, 211, 238, 0.1) 100%);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .credentials h3 {
+            margin-bottom: 15px;
+            color: var(--secondary);
+        }
+
+        .credential-list {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+        }
+
+        .credential-item {
+            text-align: left;
+        }
+
+        .credential-label {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+        }
+
+        .credential-value {
+            font-family: monospace;
+            font-size: 1.1rem;
+            color: var(--primary);
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-muted);
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        @media (max-width: 768px) {
+            .hero {
+                grid-template-columns: 1fr;
+            }
+
+            .logo {
+                font-size: 3rem;
+            }
+
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .stats {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .credential-list {
+                flex-direction: column;
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background"></div>
+    
+    <div class="container">
+        <header>
+            <div class="logo">LolOS</div>
+            <p class="tagline">Low-level Operating System</p>
+        </header>
+
+        <section class="hero">
+            <div class="hero-content">
+                <h1>Un Sistema Operativo<br>desde cero</h1>
+                <p>LolOS es un sistema operativo de 32 bits desarrollado desde cero en Assembly, C y C++. Cuenta con una interfaz gráfica moderna, gestión de memoria y varias aplicaciones preinstaladas.</p>
+                
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-value">1.5 MB</div>
+                        <div class="stat-label">Tamaño</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">32-bit</div>
+                        <div class="stat-label">Arquitectura</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">4</div>
+                        <div class="stat-label">Apps</div>
+                    </div>
+                </div>
+
+                <a href="api/lolos.img" download class="download-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Descargar LolOS (1.5 MB)
+                </a>
+            </div>
+
+            <div class="hero-visual">
+                <div class="preview-card">
+                    <div class="preview-header">
+                        <div class="preview-dot dot-red"></div>
+                        <div class="preview-dot dot-yellow"></div>
+                        <div class="preview-dot dot-green"></div>
+                    </div>
+                    <div class="terminal">
+                        <div class="terminal-line">
+                            <span class="terminal-prompt">LolOS@admin:~$</span> 
+                            <span class="terminal-output">uname -a</span>
+                        </div>
+                        <div class="terminal-line">
+                            <span class="terminal-output">LolOS 1.0.0 i386 GNU/LolOS</span>
+                        </div>
+                        <div class="terminal-line">
+                            <span class="terminal-prompt">LolOS@admin:~$</span> 
+                            <span class="terminal-output">cat /proc/cpuinfo</span>
+                        </div>
+                        <div class="terminal-line">
+                            <span class="terminal-output">processor : 0<br>model name : LolOS Virtual CPU<br>cpu MHz : 4000.000</span>
+                        </div>
+                        <div class="terminal-line">
+                            <span class="terminal-prompt">LolOS@admin:~$</span> 
+                            <span class="terminal-output">ls /bin</span>
+                        </div>
+                        <div class="terminal-line">
+                            <span class="terminal-output">terminal calculator editor filemanager</span>
+                        </div>
+                        <div class="terminal-line">
+                            <span class="terminal-prompt">LolOS@admin:~$</span> <span class="blink">_</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="features">
+            <h2 class="section-title">Características</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Bootloader Personalizado</h3>
+                    <p>Kernel Multiboot personalizado compatible con GRUB para un arranque confiable.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎮</div>
+                    <h3>Gráficos Modernos</h3>
+                    <p>Resolución VESA VBE de alta calidad (1024x768x32) con double-buffering optimizado.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🖱️</div>
+                    <h3>Entrada Avanzada</h3>
+                    <p>Controladores PS/2 para teclado y ratón con cursor gráfico interact                </div>
+ivo.</p>
+                <div class="feature-card">
+                    <div class="feature-icon">🪟</div>
+                    <h3>GUI Interactiva</h3>
+                    <p>Sistema de ventanas con barra de tareas, iconos y gestión de enfoque.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🧠</div>
+                    <h3>Gestión de Memoria</h3>
+                    <p>Asignador de heap del kernel (kmalloc) para gestión dinámica de recursos.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📁</div>
+                    <h3>VFS</h3>
+                    <p>Sistema de archivos virtual básico para gestionar archivos en memoria.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="apps">
+            <h2 class="section-title">Aplicaciones Incluidas</h2>
+            <div class="apps-grid">
+                <div class="app-item">
+                    <div class="app-icon">💻</div>
+                    <div class="app-name">Terminal</div>
+                </div>
+                <div class="app-item">
+                    <div class="app-icon">🔢</div>
+                    <div class="app-name">Calculadora</div>
+                </div>
+                <div class="app-item">
+                    <div class="app-icon">📝</div>
+                    <div class="app-name">Editor de Texto</div>
+                </div>
+                <div class="app-item">
+                    <div class="app-icon">📂</div>
+                    <div class="app-name">Gestor de Archivos</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="credentials">
+            <h3>🔐 Credenciales de Acceso</h3>
+            <div class="credential-list">
+                <div class="credential-item">
+                    <div class="credential-label">Usuario</div>
+                    <div class="credential-value">admin</div>
+                </div>
+                <div class="credential-item">
+                    <div class="credential-label">Contraseña</div>
+                    <div class="credential-value">admin1234</div>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <p>LolOS © 2026 - Proyecto educativo de OsDEV con ❤️</p>
+        </footer>
+    </div>
+
+    <style>
+        .blink {
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+    </style>
+</body>
+</html>
